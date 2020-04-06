@@ -2,6 +2,7 @@ import csv
 from dataclasses import dataclass, field, fields
 from typing import List, Tuple
 
+import attr
 import numpy as np
 
 
@@ -16,7 +17,13 @@ class Hours:
 
 
 @dataclass
-class FixedLenPosition:
+class PersonHours(Hours):
+    ID: int
+    # wed: str
+
+
+@dataclass
+class FixedPosition:
     commute: Tuple[int, int]
     work: Tuple[int, int]
     study: Tuple[int, int]
@@ -24,58 +31,74 @@ class FixedLenPosition:
     hobby: Tuple[int, int]
     sleep: Tuple[int, int]
 
-class PersonPosition:
 
-    wife_weekday_pos: List[Tuple] = field(
-        default_factory=lambda: [
-            (177, 180),
-            (180, 183),
-            (183, 186),
-            (186, 189),
-            (201, 204),
-            (213, 216),
-        ]
+@dataclass
+class PersonFixedPosition:
+    wife_weekday = FixedPosition(
+        commute=(177, 180),
+        work=(180, 183),
+        study=(183, 186),
+        housework=(186, 189),
+        hobby=(201, 204),
+        sleep=(213, 216),
     )
 
-    wife_holiday_pos: List[Tuple] = field(
-        default_factory=lambda: [
-            (216, 219),
-            (219, 222),
-            (222, 225),
-            (225, 228),
-            (240, 243),
-            (252, 255),
-        ]
+    wife_holiday = FixedPosition(
+        commute=(216, 219),
+        work=(219, 222),
+        study=(222, 225),
+        housework=(225, 228),
+        hobby=(240, 243),
+        sleep=(252, 255),
     )
-    husband_weekday_pos: List[Tuple] = field(
-        default_factory=lambda: [
-            (255, 258),
-            (258, 261),
-            (261, 264),
-            (264, 267),
-            (279.282),
-            (291, 294),
-        ]
+
+    husband_weekday = FixedPosition(
+        commute=(216, 219),
+        work=(219, 222),
+        study=(222, 225),
+        housework=(225, 228),
+        hobby=(240, 243),
+        sleep=(252, 255),
     )
-    husband_holiday_pos: List[Tuple] = field(
-        default_factory=lambda: [
-            (294, 297),
-            (297, 300),
-            (300, 303),
-            (303, 306),
-            (318, 321),
-            (330, 333),
-        ]
+
+    husband_holiday = FixedPosition(
+        commute=(294, 297),
+        work=(297, 300),
+        study=(300, 303),
+        housework=(303, 306),
+        hobby=(318, 321),
+        sleep=(330, 333),
     )
 
 
+@attr.s
 class DataFactory:
-    def __init__(self, person, day_type):
-        self.person = person
-        self.day_type = day_type
+    fixed_data = attr.ib()
+    hour_type = attr.ib()
 
-    def make(self):
-        pass
+    @hour_type.validator
+    def check_hour_type(self, attribute, value):
+        trgt_type = [
+            "wife_weekday",
+            "wife_holiday",
+            "husband_weekday",
+            "husband_holiday",
+        ]
+        if not isinstance(value, str):
+            raise TypeError("name must be str")
+        if value not in trgt_type:
+            raise Exception("invalid hour_type")
+
+    def create(self):
+        position = getattr(PersonFixedPosition(), self.hour_type).__dict__
+
+        with open(self.fixed_data, "r") as f:
+            for i in f:
+                hours = {k: i[v[0] : v[1]] for (k, v) in position.items()}
+                hours["ID"] = i[0:4]
+                person = PersonHours(**hours)
+                print(person.commute)
+
         # Hours(commute, work, study, housework, hobby, sleep)
 
 
@@ -84,6 +107,13 @@ class Name:
 
 
 if __name__ == "__main__":
-    d = FixedLenPosition()
-    print(d.wife_weekday_pos)
+    d = PersonFixedPosition()
+    ww = getattr(d, "wife_weekday")
+    wh = getattr(d, "wife_holiday")
+    hw = getattr(d, "husband_weekday")
+    hh = getattr(d, "husband_holiday")
+    print(hh.__dict__)
     purpose = [f.name for f in fields(Hours)]
+
+    a = DataFactory("P27_3.txt", "husband_weekday")
+    a.create()
