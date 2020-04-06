@@ -17,6 +17,15 @@ class Hours:
 
 @dataclass
 class FixedLenPosition:
+    commute: Tuple[int, int]
+    work: Tuple[int, int]
+    study: Tuple[int, int]
+    housework: Tuple[int, int]
+    hobby: Tuple[int, int]
+    sleep: Tuple[int, int]
+
+class PersonPosition:
+
     wife_weekday_pos: List[Tuple] = field(
         default_factory=lambda: [
             (177, 180),
